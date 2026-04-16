@@ -1,0 +1,24 @@
+name: DEP-4198 repro
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: depot-ubuntu-latest
+    steps:
+      - run: echo "build done"
+
+  deploy-staging:
+    needs: [build]
+    if: startsWith(github.ref_name, 'release/')
+    runs-on: depot-ubuntu-latest
+    steps:
+      - run: echo "ref_name is ${{ github.ref_name }} — deploy to staging triggered"
+
+  deploy-production:
+    needs: [build]
+    if: github.ref_name == 'main'
+    runs-on: depot-ubuntu-latest
+    steps:
+      - run: echo "ref_name is ${{ github.ref_name }} — deploy to production triggered"
