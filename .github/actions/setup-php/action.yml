@@ -1,0 +1,11 @@
+name: Setup PHP
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare config
+      shell: bash
+      run: cp etc/scripts/.env.test .env.test.local
+    - uses: ramsey/composer-install@4.0.0
+    - name: Reduce AWS SDK size
+      shell: bash
+      run: composer run-script reduce-aws-sdk

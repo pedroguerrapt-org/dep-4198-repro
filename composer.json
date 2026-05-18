@@ -1,0 +1,11 @@
+{
+  "name": "depot/composer-auth-repro",
+  "description": "Minimal Depot CI repro for Composer GitHub auth behavior.",
+  "type": "project",
+  "require": {
+    "composer/semver": "^3.4"
+  },
+  "scripts": {
+    "reduce-aws-sdk": "@php -r \"echo 'reduce-aws-sdk noop'.PHP_EOL;\""
+  }
+}

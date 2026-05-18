@@ -1,0 +1,72 @@
+name: Composer Auth Repro
+
+on:
+  workflow_dispatch:
+
+jobs:
+  baseline-ramsey:
+    name: Baseline ramsey/composer-install
+    runs-on: depot-ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PHP and Composer without setup-php
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-curl php-zip php-mbstring unzip git curl ca-certificates jq composer
+
+      - name: Diagnose before local composite
+        shell: bash
+        env:
+          GH_CONTEXT_TOKEN: ${{ github.token }}
+          GH_SECRET_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/diagnose-composer-auth.sh before-baseline
+
+      - uses: ./.github/actions/setup-php
+
+      - name: Diagnose after local composite
+        if: always()
+        shell: bash
+        env:
+          GH_CONTEXT_TOKEN: ${{ github.token }}
+          GH_SECRET_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/diagnose-composer-auth.sh after-baseline
+
+  explicit-github-token:
+    name: Explicit Composer auth with github.token
+    runs-on: depot-ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PHP and Composer without setup-php
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-curl php-zip php-mbstring unzip git curl ca-certificates jq composer
+          sudo composer self-update 2.9.8
+
+      - name: Diagnose before explicit auth
+        shell: bash
+        env:
+          GH_CONTEXT_TOKEN: ${{ github.token }}
+          GH_SECRET_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/diagnose-composer-auth.sh before-explicit
+
+      - name: Run Composer with explicit github.token auth
+        shell: bash
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        run: composer update --no-interaction --no-progress --ansi
+
+      - name: Diagnose after explicit auth
+        if: always()
+        shell: bash
+        env:
+          GH_CONTEXT_TOKEN: ${{ github.token }}
+          GH_SECRET_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/diagnose-composer-auth.sh after-explicit
