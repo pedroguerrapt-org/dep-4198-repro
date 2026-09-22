@@ -1,0 +1,51 @@
+name: T-11858 workaround on Depot CI
+
+on:
+  push:
+    branches: [repro/t11858-matrix-exclude]
+    paths:
+      - .depot/workflows/t11858-workaround.yml
+  pull_request:
+    paths:
+      - .depot/workflows/t11858-workaround.yml
+
+permissions: {}
+
+# Compute the event flag before matrix expansion and exclude the complete object.
+jobs:
+  event:
+    name: Compute PR flag
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      is_pr: ${{ steps.event.outputs.is_pr }}
+    steps:
+      - id: event
+        name: Export PR flag
+        run: |
+          echo "event=${{ github.event_name }}"
+          echo "is_pr=${{ github.event_name == 'pull_request' }}" | tee -a "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: event
+    name: Deploy (${{ matrix.environments.stage }})
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        environments:
+          - { stage: prod, account_id: "111111111111" }
+          - { stage: staging, account_id: "222222222222" }
+        isPR:
+          - ${{ fromJSON(needs.event.outputs.is_pr) }}
+        exclude:
+          - { isPR: true, environments: { stage: prod, account_id: "111111111111" } }
+    steps:
+      - name: Print selected deployment only
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        run: |
+          printf 'event=%s\nmatrix=%s\n' "$EVENT_NAME" "$MATRIX_JSON"
+          echo "deploying to ${{ matrix.environments.stage }} (${{ matrix.environments.account_id }})"

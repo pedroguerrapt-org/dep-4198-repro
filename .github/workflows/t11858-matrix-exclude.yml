@@ -1,0 +1,94 @@
+name: T-11858 matrix exclusion parity
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/t11858-matrix-exclude.yml
+
+permissions: {}
+
+jobs:
+  original-partial-object:
+    name: Original partial object / Deploy (${{ matrix.environments.stage }})
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        environments:
+          - { stage: prod, account_id: "111111111111" }
+          - { stage: staging, account_id: "222222222222" }
+        isPR:
+          - ${{ github.event_name == 'pull_request' }}
+        exclude:
+          - { isPR: true, environments: { stage: prod } }
+    steps:
+      - name: Print selected matrix only
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        run: |
+          printf 'event=%s\nmatrix=%s\n' "$EVENT_NAME" "$MATRIX_JSON"
+
+  complete-object:
+    name: Complete object / Deploy (${{ matrix.environments.stage }})
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        environments:
+          - { stage: prod, account_id: "111111111111" }
+          - { stage: staging, account_id: "222222222222" }
+        isPR:
+          - ${{ github.event_name == 'pull_request' }}
+        exclude:
+          - { isPR: true, environments: { stage: prod, account_id: "111111111111" } }
+    steps:
+      - name: Print selected matrix only
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        run: |
+          printf 'event=%s\nmatrix=%s\n' "$EVENT_NAME" "$MATRIX_JSON"
+
+  literal-partial-object:
+    name: Literal true partial object / Deploy (${{ matrix.environments.stage }})
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        environments:
+          - { stage: prod, account_id: "111111111111" }
+          - { stage: staging, account_id: "222222222222" }
+        isPR: [true]
+        exclude:
+          - { isPR: true, environments: { stage: prod } }
+    steps:
+      - name: Print selected matrix only
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        run: |
+          printf 'event=%s\nmatrix=%s\n' "$EVENT_NAME" "$MATRIX_JSON"
+
+  scalar-expression:
+    name: Scalar expression / Deploy (${{ matrix.stage }})
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [prod, staging]
+        isPR:
+          - ${{ github.event_name == 'pull_request' }}
+        exclude:
+          - { isPR: true, stage: prod }
+    steps:
+      - name: Print selected matrix only
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        run: |
+          printf 'event=%s\nmatrix=%s\n' "$EVENT_NAME" "$MATRIX_JSON"
