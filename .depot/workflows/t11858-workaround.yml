@@ -11,6 +11,7 @@ on:
 
 permissions: {}
 
+# Compute the event flag before matrix expansion and exclude the complete object.
 jobs:
   event:
     name: Compute PR flag
