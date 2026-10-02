@@ -1,0 +1,46 @@
+name: DEP-3780 public reusable workflow
+on:
+  workflow_call:
+    inputs:
+      message:
+        type: string
+        required: true
+      enabled:
+        type: boolean
+        default: true
+      count:
+        type: number
+        default: 2
+    outputs:
+      payload:
+        value: ${{ jobs.probe.outputs.payload }}
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      payload: ${{ steps.emit.outputs.payload }}
+    steps:
+      - name: Execute an external JavaScript action
+        uses: actions/github-script@v7
+        with:
+          script: core.info('DEP-3780 external JavaScript action executed')
+      - id: emit
+        env:
+          MESSAGE: ${{ inputs.message }}
+          ENABLED: ${{ inputs.enabled }}
+          COUNT: ${{ inputs.count }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          payload = json.dumps({
+              'message': os.environ['MESSAGE'],
+              'enabled': os.environ['ENABLED'] == 'true',
+              'count': int(os.environ['COUNT']),
+          })
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('payload=' + payload + '\n')
+          print('DEP-3780 callee executed:', payload)
+          PY
