@@ -1,0 +1,27 @@
+name: Self repository leaf
+description: Verify no-checkout self-repository resolution at the running commit
+outputs:
+  result:
+    description: Successful self-repository resolution
+    value: ${{ steps.verify.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - id: verify
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        EXPECTED_SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+        test ! -e "$GITHUB_WORKSPACE/.git"
+        test ! -e "$GITHUB_WORKSPACE/.github"
+        test "$(cat "$ACTION_PATH/marker.txt")" = "self-repository-repro-2026-10-19"
+        case "$ACTION_PATH" in
+          */"$EXPECTED_SHA"/.github/actions/self-repo-leaf) ;;
+          *) echo "Unexpected action commit path: $ACTION_PATH"; exit 1 ;;
+        esac
+        echo "PASS: self-repository action loaded at $EXPECTED_SHA without checkout"
+        echo "Action path: $ACTION_PATH"
+        echo "Runner: $RUNNER_NAME ($RUNNER_OS/$RUNNER_ARCH)"
+        echo "result=passed" >> "$GITHUB_OUTPUT"

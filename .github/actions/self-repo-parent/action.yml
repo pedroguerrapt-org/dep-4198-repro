@@ -1,0 +1,11 @@
+name: Nested self repository action
+description: Verify a composite action can resolve another action using the self-repository prefix
+outputs:
+  result:
+    description: Nested action result
+    value: ${{ steps.leaf.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - id: leaf
+      uses: $/.github/actions/self-repo-leaf

@@ -1,0 +1,31 @@
+name: Self repository reusable workflow
+on:
+  workflow_call:
+    outputs:
+      result:
+        description: Reusable workflow action result
+        value: ${{ jobs.verify.outputs.result }}
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      result: ${{ steps.nested.outputs.result }}
+    steps:
+      - name: Self-repository action from reusable workflow
+        id: direct
+        uses: $/.github/actions/self-repo-leaf
+      - name: Nested self-repository action from reusable workflow
+        id: nested
+        uses: $/.github/actions/self-repo-parent
+      - name: Assert reusable workflow results
+        env:
+          DIRECT: ${{ steps.direct.outputs.result }}
+          NESTED: ${{ steps.nested.outputs.result }}
+        run: |
+          set -euo pipefail
+          test "$DIRECT" = passed
+          test "$NESTED" = passed
+          echo "PASS: reusable workflow with direct and nested self-repository actions"

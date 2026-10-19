@@ -1,0 +1,38 @@
+name: Depot GHA self-repository repro
+on:
+  push:
+    branches: [repro/gha-self-repository-2026-10-19]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actions:
+    name: Direct and nested (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - depot-ubuntu-22.04
+          - depot-ubuntu-22.04-arm
+          - depot-ubuntu-24.04
+          - depot-ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 3
+    steps:
+      - name: Direct self-repository action without checkout
+        id: direct
+        uses: $/.github/actions/self-repo-leaf
+      - name: Nested self-repository composite action without checkout
+        id: nested
+        uses: $/.github/actions/self-repo-parent
+      - name: Assert action outputs
+        env:
+          DIRECT: ${{ steps.direct.outputs.result }}
+          NESTED: ${{ steps.nested.outputs.result }}
+        run: |
+          set -euo pipefail
+          test "$DIRECT" = passed
+          test "$NESTED" = passed
+          echo "PASS: direct and nested self-repository references without checkout"
+  reusable:
+    uses: $/.github/workflows/self-repo-reusable.yml
